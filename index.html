@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>人口结构 × 生产力</title>
+<title>AI 时代的阶层重构</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -20,20 +20,38 @@
     border-radius: 18px;
     padding: 44px 56px 48px;
     box-shadow: 0 2px 16px rgba(0,0,0,0.07);
-    width: 640px;
+    width: 680px;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 36px;
+  }
+  .header h1 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1a2b3c;
+    letter-spacing: 1px;
+  }
+  .header p {
+    font-size: 12px;
+    color: #9aaabb;
+    margin-top: 6px;
+    line-height: 1.6;
   }
 
   /* Column headers */
   .col-headers {
     display: grid;
     grid-template-columns: 1fr 80px 1fr;
-    margin-bottom: 32px;
+    margin-bottom: 28px;
   }
   .col-header {
     text-align: center;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 700;
-    padding: 8px 0;
+    padding: 7px 0;
     border-radius: 8px;
     letter-spacing: 1px;
   }
@@ -44,7 +62,7 @@
   .rows {
     display: flex;
     flex-direction: column;
-    gap: 32px;
+    gap: 28px;
   }
   .row {
     display: grid;
@@ -55,7 +73,18 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 16px 8px;
+    padding: 12px 8px;
+    position: relative;
+  }
+
+  /* Annotation labels */
+  .annot {
+    font-size: 10px;
+    color: #8a9ab0;
+    text-align: center;
+    line-height: 1.4;
+    position: absolute;
+    white-space: nowrap;
   }
 
   /* Arrow connector */
@@ -64,17 +93,29 @@
     align-items: center;
     justify-content: center;
   }
-  .arrow-svg { display: block; }
 
   .divider {
     height: 1px;
     background: #EEF2F7;
   }
 
+  /* Row label */
+  .row-context {
+    display: grid;
+    grid-template-columns: 1fr 80px 1fr;
+    margin-bottom: 6px;
+  }
+  .row-ctx-item {
+    text-align: center;
+    font-size: 10px;
+    color: #aabbc8;
+    font-style: italic;
+  }
+
   .footer {
     text-align: center;
     margin-top: 36px;
-    font-size: 10.5px;
+    font-size: 10px;
     color: #c8d4e0;
   }
 </style>
@@ -82,101 +123,128 @@
 <body>
 <div class="card">
 
+  <!-- Header -->
+  <div class="header">
+    <h1>AI 时代的阶层重构</h1>
+    <p>随着 AI 渗透生产，阶层流动趋于固化<br>极少数人驾驭 AI，生产绝大多数价值</p>
+  </div>
+
   <!-- Column headers -->
   <div class="col-headers">
-    <div class="col-header left">人口结构</div>
+    <div class="col-header left">阶层结构</div>
     <div></div>
-    <div class="col-header right">生产力</div>
+    <div class="col-header right">生产力分布</div>
   </div>
 
   <div class="rows">
 
-    <!-- Row 1 -->
-    <div class="row">
-      <!-- Left: Regular triangle (正三角) -->
-      <div class="shape-cell">
-        <svg width="160" height="120" viewBox="0 0 160 120">
-          <polygon
-            points="80,10 148,110 12,110"
-            fill="#FFF3DC"
-            stroke="#7A8FA0"
-            stroke-width="2.5"
-            stroke-linejoin="round"
-          />
-        </svg>
+    <!-- Row 1: Before / Normal -->
+    <div>
+      <div class="row-context">
+        <div class="row-ctx-item">工业时代</div>
+        <div></div>
+        <div class="row-ctx-item">工业时代</div>
       </div>
+      <div class="row">
+        <!-- Left: Regular triangle -->
+        <div class="shape-cell" style="height:140px;">
+          <svg width="160" height="115" viewBox="0 0 160 115">
+            <polygon
+              points="80,8 150,107 10,107"
+              fill="#FFF8EC"
+              stroke="#7A8FA0"
+              stroke-width="2.5"
+              stroke-linejoin="round"
+            />
+          </svg>
+          <!-- annotations -->
+          <div class="annot" style="top:18px; left:50%; transform:translateX(-50%);">精英层</div>
+          <div class="annot" style="bottom:22px; left:50%; transform:translateX(-50%);">中产 + 大众</div>
+        </div>
 
-      <!-- Arrow -->
-      <div class="connector">
-        <svg class="arrow-svg" width="60" height="24" viewBox="0 0 60 24">
-          <line x1="4" y1="12" x2="48" y2="12" stroke="#C8D6E5" stroke-width="1.5"/>
-          <polygon points="48,7 58,12 48,17" fill="#C8D6E5"/>
-        </svg>
-      </div>
+        <!-- Arrow -->
+        <div class="connector">
+          <svg width="60" height="24" viewBox="0 0 60 24">
+            <line x1="4" y1="12" x2="48" y2="12" stroke="#C8D6E5" stroke-width="1.5"/>
+            <polygon points="48,7 58,12 48,17" fill="#C8D6E5"/>
+          </svg>
+        </div>
 
-      <!-- Right: Wide-top trapezoid (正梯形) -->
-      <div class="shape-cell">
-        <svg width="160" height="120" viewBox="0 0 160 120">
-          <polygon
-            points="14,10 146,10 118,110 42,110"
-            fill="#EBF4FF"
-            stroke="#7A8FA0"
-            stroke-width="2.5"
-            stroke-linejoin="round"
-          />
-        </svg>
+        <!-- Right: Wide-top trapezoid -->
+        <div class="shape-cell" style="height:140px;">
+          <svg width="160" height="115" viewBox="0 0 160 115">
+            <polygon
+              points="14,8 146,8 118,107 42,107"
+              fill="#EBF4FF"
+              stroke="#7A8FA0"
+              stroke-width="2.5"
+              stroke-linejoin="round"
+            />
+          </svg>
+          <div class="annot" style="top:18px; left:50%; transform:translateX(-50%);">高产能</div>
+          <div class="annot" style="bottom:22px; left:50%; transform:translateX(-50%);">广泛参与</div>
+        </div>
       </div>
     </div>
 
     <div class="divider"></div>
 
-    <!-- Row 2 -->
-    <div class="row">
-      <!-- Left: Asymmetric hourglass (small inverted top + large bottom triangle) -->
-      <div class="shape-cell">
-        <svg width="160" height="120" viewBox="0 0 160 120">
-          <!-- Top: small inverted triangle (▽ small, centered, upper half) -->
-          <!-- Wide at top (narrow span), point meets center -->
-          <polygon
-            points="48,12 112,12 80,58"
-            fill="#FFF3DC"
-            stroke="#7A8FA0"
-            stroke-width="2.5"
-            stroke-linejoin="round"
-          />
-          <!-- Bottom: large upright triangle (△ large, full width, lower half) -->
-          <!-- Point at center meets top triangle -->
-          <polygon
-            points="80,58 8,110 152,110"
-            fill="#FFF3DC"
-            stroke="#7A8FA0"
-            stroke-width="2.5"
-            stroke-linejoin="round"
-          />
-          <!-- Center dot -->
-          <circle cx="80" cy="58" r="3" fill="#7A8FA0"/>
-        </svg>
+    <!-- Row 2: AI era / Distorted -->
+    <div>
+      <div class="row-context">
+        <div class="row-ctx-item" style="color:#c0504d; font-style:normal; font-weight:600;">AI 时代（畸形）</div>
+        <div></div>
+        <div class="row-ctx-item" style="color:#c0504d; font-style:normal; font-weight:600;">AI 时代（畸形）</div>
       </div>
+      <div class="row">
+        <!-- Left: Asymmetric hourglass -->
+        <div class="shape-cell" style="height:150px;">
+          <svg width="160" height="120" viewBox="0 0 160 120">
+            <!-- Top: small inverted triangle (elite, small) -->
+            <polygon
+              points="50,10 110,10 80,55"
+              fill="#FFF8EC"
+              stroke="#7A8FA0"
+              stroke-width="2.5"
+              stroke-linejoin="round"
+            />
+            <!-- Bottom: large upright triangle (masses, large) -->
+            <polygon
+              points="80,55 6,112 154,112"
+              fill="#FFF8EC"
+              stroke="#7A8FA0"
+              stroke-width="2.5"
+              stroke-linejoin="round"
+            />
+            <circle cx="80" cy="55" r="2.5" fill="#7A8FA0"/>
+          </svg>
+          <div class="annot" style="top:14px; left:50%; transform:translateX(-50%);">少数精英</div>
+          <div class="annot" style="top:55px; left:50%; transform:translateX(-50%); color:#c0504d;">中产消失</div>
+          <div class="annot" style="bottom:14px; left:50%; transform:translateX(-50%);">庞大底层</div>
+        </div>
 
-      <!-- Arrow -->
-      <div class="connector">
-        <svg class="arrow-svg" width="60" height="24" viewBox="0 0 60 24">
-          <line x1="4" y1="12" x2="48" y2="12" stroke="#C8D6E5" stroke-width="1.5"/>
-          <polygon points="48,7 58,12 48,17" fill="#C8D6E5"/>
-        </svg>
-      </div>
+        <!-- Arrow -->
+        <div class="connector">
+          <svg width="60" height="24" viewBox="0 0 60 24">
+            <line x1="4" y1="12" x2="48" y2="12" stroke="#C8D6E5" stroke-width="1.5"/>
+            <polygon points="48,7 58,12 48,17" fill="#C8D6E5"/>
+          </svg>
+        </div>
 
-      <!-- Right: Exaggerated inverted triangle (very acute, sharp bottom point) -->
-      <div class="shape-cell">
-        <svg width="160" height="120" viewBox="0 0 160 120">
-          <polygon
-            points="6,10 154,10 80,114"
-            fill="#FDECEA"
-            stroke="#7A8FA0"
-            stroke-width="2.5"
-            stroke-linejoin="round"
-          />
-        </svg>
+        <!-- Right: Very exaggerated inverted triangle -->
+        <div class="shape-cell" style="height:150px;">
+          <svg width="160" height="120" viewBox="0 0 160 120">
+            <polygon
+              points="4,8 156,8 80,116"
+              fill="#FDECEA"
+              stroke="#7A8FA0"
+              stroke-width="2.5"
+              stroke-linejoin="round"
+            />
+          </svg>
+          <div class="annot" style="top:14px; left:50%; transform:translateX(-50%);">少数人 · 绝大多数产值</div>
+          <div class="annot" style="bottom:18px; left:50%; transform:translateX(-50%); color:#c0504d;">多数人 · 贡献趋近于零</div>
+        </div>
       </div>
     </div>
 
