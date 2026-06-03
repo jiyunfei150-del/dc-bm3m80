@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>brain-query 智能问数系统 · NL-to-SQL Architecture</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+    background: #EEF2F7;
+    min-height: 100vh;
+    padding: 28px;
+    color: #3d4f60;
+  }
+  .page-wrap {
+    background: #FFFFFF;
+    border-radius: 16px;
+    padding: 36px 40px 32px;
+    max-width: 1480px;
+    margin: 0 auto;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  }
+
+  /* Header */
+  .page-header {
+    text-align: center;
+    margin-bottom: 36px;
+  }
+  .page-header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1b4f86;
+    letter-spacing: 0.5px;
+  }
+  .page-header p {
+    font-size: 13px;
+    color: #7a8fa0;
+    margin-top: 6px;
+  }
+
+  /* ===== SECTION LABEL ===== */
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #a0b0c0;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+
+  /* ===== TOP PIPELINE ===== */
+  .pipeline-section {
+    margin-bottom: 32px;
+  }
+  .pipeline-wrap {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+
+  /* pipeline step = node + arrow column */
+  .pipeline-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .pipeline-step-inner {
+    display: flex;
+    align-items: center;
+  }
+
+  /* Node */
+  .node {
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 12px;
+    line-height: 1.5;
+    text-align: center;
+    white-space: nowrap;
+    border-width: 1.5px;
+    border-style: solid;
+    position: relative;
+    min-width: 110px;
+    max-width: 150px;
+    white-space: normal;
+    text-align: center;
+  }
+  .node-label-en {
+    font-size: 10px;
+    opacity: 0.7;
+    display: block;
+    margin-top: 2px;
+  }
+  .node-pill { border-radius: 999px; }
+
+  /* Colors */
+  .node-blue  { background:#DFF0FF; border-color:#90C6F5; color:#1b4f86; }
+  .node-amber { background:#FEF6E0; border-color:#F4CC6A; color:#7a4f08; }
+  .node-mint  { background:#E3F6EC; border-color:#85CCA8; color:#1e6b46; }
+  .node-teal  { background:#DFF8F4; border-color:#82D9CE; color:#12574e; }
+  .node-lavender { background:#F0EAFF; border-color:#C3AAEE; color:#4a2d8c; }
+  .node-yellow { background:#FFFBE6; border-color:#FFE48A; color:#7a5e00; }
+  .node-rose  { background:#FDECEA; border-color:#F0A8A0; color:#8c2319; }
+  .node-slate { background:#F0F4F8; border-color:#B0BFCC; color:#3d4f60; }
+
+  /* Arrow */
+  .arrow-h {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 4px;
+    margin-top: 18px; /* align with node center */
+  }
+  .arrow-h-line {
+    height: 1.5px;
+    background: #B0BFCC;
+    width: 36px;
+    position: relative;
+  }
+  .arrow-h-line::after {
+    content: '';
+    position: absolute;
+    right: -1px;
+    top: -4px;
+    border: 5px solid transparent;
+    border-left: 7px solid #B0BFCC;
+  }
+  .arrow-label {
+    font-size: 9px;
+    color: #a0b0c0;
+    margin-top: 2px;
+    white-space: nowrap;
+    max-width: 80px;
+    text-align: center;
+    line-height: 1.3;
+  }
+
+  /* Branch drops */
+  .branch-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 4px;
+  }
+  .branch-line-v {
+    width: 1.5px;
+    height: 14px;
+    background: #B0BFCC;
+  }
+  .branch-node {
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 10px;
+    line-height: 1.4;
+    text-align: center;
+    border-width: 1.5px;
+    border-style: solid;
+    max-width: 130px;
+  }
+  .branch-multi {
+    display: flex;
+    gap: 6px;
+    align-items: flex-start;
+  }
+  .branch-bar {
+    width: 100%;
+    height: 1.5px;
+    background: #B0BFCC;
+    margin: 0 auto;
+  }
+  .branch-fan {
+    display: flex;
+    gap: 6px;
+    align-items: flex-start;
+    position: relative;
+  }
+  .branch-fan-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* ===== BOTTOM DETAIL CARDS ===== */
+  .cards-section {
+    margin-bottom: 32px;
+  }
+  .cards-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+  .detail-card {
+    background: #FAFBFD;
+    border: 1.5px solid #DDE4EE;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .card-accent {
+    height: 4px;
+  }
+  .accent-amber  { background: #F4CC6A; }
+  .accent-teal   { background: #82D9CE; }
+  .accent-blue   { background: #90C6F5; }
+  .accent-lavender { background: #C3AAEE; }
+
+  .card-body {
+    padding: 14px 14px 16px;
+  }
+  .card-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #3d4f60;
+    margin-bottom: 12px;
+    line-height: 1.4;
+  }
+  .card-flow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .card-node {
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 10.5px;
+    line-height: 1.4;
+    text-align: center;
+    border-width: 1.5px;
+    border-style: solid;
+    width: 100%;
+  }
+  .card-arrow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+  .card-arrow-v {
+    width: 1.5px;
+    height: 10px;
+    background: #B0BFCC;
+    position: relative;
+  }
+  .card-arrow-v::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: -3.5px;
+    border: 4px solid transparent;
+    border-top: 6px solid #B0BFCC;
+  }
+  .card-arrow-label {
+    font-size: 9px;
+    color: #a0b0c0;
+  }
+  .card-parallel {
+    display: flex;
+    gap: 6px;
+    width: 100%;
+  }
+  .card-parallel .card-node {
+    flex: 1;
+    font-size: 9.5px;
+  }
+  .dashed-group {
+    border: 1.5px dashed #B0BFCC;
+    border-radius: 8px;
+    padding: 6px 8px;
+    width: 100%;
+    margin: 2px 0;
+  }
+  .dashed-label {
+    font-size: 9px;
+    color: #a0b0c0;
+    text-align: center;
+    margin-bottom: 4px;
+  }
+  .dashed-group .card-flow { gap: 3px; }
+  .card-arrow-dashed {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .card-arrow-dashed-v {
+    width: 1.5px;
+    height: 10px;
+    background: #B0BFCC;
+    border-left: 1.5px dashed #B0BFCC;
+    position: relative;
+  }
+  .card-arrow-dashed-v::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: -3.5px;
+    border: 4px solid transparent;
+    border-top: 6px solid #B0BFCC;
+  }
+  .card-arrow-dashed-label {
+    font-size: 9px;
+    color: #c0c0a0;
+    font-style: italic;
+  }
+  .stacked-group {
+    width: 100%;
+    margin-bottom: 8px;
+  }
+  .stacked-group-label {
+    font-size: 9px;
+    color: #a0b0c0;
+    font-weight: 600;
+    margin-bottom: 4px;
+    letter-spacing: 0.5px;
+  }
+  .grid-2x2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    width: 100%;
+  }
+  .grid-2x2 .card-node {
+    font-size: 9px;
+  }
+  .cron-flow {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+  .cron-node {
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 9.5px;
+    border: 1.5px solid;
+    white-space: nowrap;
+  }
+  .cron-arrow {
+    font-size: 10px;
+    color: #B0BFCC;
+  }
+
+  /* ===== LEGEND ===== */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10.5px;
+    color: #5a6a7a;
+  }
+  .legend-swatch {
+    width: 14px;
+    height: 14px;
+    border-radius: 4px;
+    border: 1.5px solid;
+    flex-shrink: 0;
+  }
+  .footer {
+    text-align: center;
+    margin-top: 24px;
+    font-size: 10.5px;
+    color: #b0bfcc;
+  }
+
+  /* Pipeline overflow container */
+  .pipeline-container {
+    overflow-x: auto;
+    padding-bottom: 12px;
+  }
+
+  /* wider arrow for labeled ones */
+  .arrow-h-wide .arrow-h-line {
+    width: 52px;
+  }
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <!-- Header -->
+  <div class="page-header">
+    <h1>🧠 brain-query 智能问数系统 &nbsp;·&nbsp; NL-to-SQL Architecture</h1>
+    <p>自然语言 → 意图识别 → SQL生成 → 结构化答案 &nbsp;|&nbsp; Full Pipeline Overview</p>
+  </div>
+
+  <!-- TOP SECTION: Main Pipeline -->
+  <div class="pipeline-section">
+    <div class="section-label">▸ Main Pipeline &nbsp;· 主干流程</div>
+    <div class="pipeline-container">
+      <div class="pipeline-wrap">
+
+        <!-- Node 1: Client -->
+        <div class="pipeline-step">
+          <div class="pipeline-step-inner">
+            <div class="node node-blue node-pill" style="min-width:120px;">
+              🖥️ 客户端 Client<br>
+              <span class="node-label-en">飞书 · Web · CLI</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Arrow 1 -->
+        <div class="arrow-h arrow-h-wide" style="margin-top:22px; flex-shrink:0;">
+          <div class="arrow-h-line"></div>
+          <div class="arrow-label">POST /query/stream<br>x-api-token</div>
+        </div>
+
+        <!-- Node 2: FastAPI -->
+        <div class="pipeline-step">
+          <div class="pipeline-step-inner">
+            <div class="node node-blue" style="min-width:128px;">
+              ⚡ FastAPI<br>
+              <span class="node-label-en">server.py · 鉴权·SSE·18765</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Arrow 2 -->
+        <div class="arrow-h" style="margin-top:22px; flex-shrink:0;">
+          <div class="arrow-h-line"></div>
+          <div class="arrow-label">run_dict()</div>
+        </div>
+
+        <!-- Node 3: Jargon + branch -->
+        <div class="pipeline-step">
+          <div class="pipeline-step-inner">
+            <div class="node node-slate" style="min-width:128px;">
+              🗣️ 黑话解析<br>
+              <span class="node-label-en">node_jargon_resolve · 0.78</span>
+            </div>
+          </div>
+          <div class="branch-wrap">
+            <div class="branch-line-v"></div>
+            <div class="branch-node node-mint">
+              Weaviate Jargon<br>
+              <span style="font-size:9px;opacity:0.75">命中→替换query<br>未命中→直通</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Arrow 3 -->
+        <div class="arrow-h" style="margin-top:22px; flex-shrink:0;">
+          <div class="arrow-h-line"></div>
+        </div>
+
+        <!-- Node 4: Intent + branch -->
+        <div class="pipeline-step">
+          <div class="pipeline-step-inner">
+            <div class="node node-amber" style="min-width:140px;">
+              🔍 意图识别 LLM<br>
+              <span class="node-label-en">node_intent · intent/metrics</span>
+            </div>
+          </div>
+          <div class="branch-wrap">
+            <div class="branch-line-v"></div>
+            <div class="branch-multi">
+              <div class="branch-node node-lavender" style="font-size:9.5px;">
+                👤 用户画像<br>
+                <span style="opacity:0.7">Neo4j User · profile_hint</span>
+              </div>
+              <div class="branch-node node-teal" style="font-size:9.5px;">
+                💬 会话上下文<br>
+                <span style="opacity:0.7">最近3轮Q · light_ctx</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Arrow 4 -->
+        <div class="arrow-h" style="margin-top:22px; flex-shrink:0;">
+          <div class="arrow-h-line"></div>
+        </div>
+
+        <!-- Node 5: Confidence + branch -->
+        <div class="pipeline-step">
+          <div class="pipeline-step-inner">
+            <div class="node node-yellow" style="min-width:128px;">
+              ⚖️ 置信度校验<br>
+              <span class="node-label-en">threshold = 60</span>
+            </div>
+          </div>
+          <div class="branch-wrap">
+            <div class="branch-line-v"></div>
+            <div class="branch-node node-rose" style="font-size:9.5px;">
+              ❓ 澄清问题<br>
+              <span style="opacity:0.7">clarify_pending=True<br>↩️ 返回客户端</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Arrow 5 -->
+        <div class="arrow-h" style="margin-top:22px; flex-shrink:0;">
+          <div class="arrow-h-line"></div>
+        </div>
+
+        <!-- Node 6: Recall + branch fan -->
+        <div class="pipeline-step">
+          <div class="pipeline-step-inner">
+            <div class="node node-teal" style="min-width:140px;">
+              🧠 召回 + 增强<br>
+              <span class="node-label-en">Weaviate · Neo4j · 并发</span>
+            </div>
+          </div>
+          <div class="branch-wrap">
+            <div class="branch-line-v"></div>
+            <div class="branch-fan">
+              <div class="branch-fan-item">
+                <div class="branch-node node-teal" style="font-size:9px;min-width:70px;">
+                  🕸️ node_neo4j<br>血缘查询
+                </div>
+              </div>
+              <div class="branch-fan-item">
+                <div class="branch-node node-mint" style="font-size:9px;min-width:76px;">
+                  🔬 node_analysis<br>多维分析
+                </div>
+              </div>
+              <div class="branch-fan-item">
+                <div class="branch-node node-amber" style="font-size:9px;min-width:90px;">
+                  single/multi<br>trend/dashboard
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Arrow 6 -->
+        <div class="arrow-h" style="margin-top:22px; flex-shrink:0;">
+          <div class="arrow-h-line"></div>
+        </div>
+
+        <!-- Node 7: SQL Gen + branch -->
+        <div class="pipeline-step">
+          <div class="pipeline-step-inner">
+            <div class="node node-amber" style="min-width:134px;">
+              🔧 SQL生成 LLM<br>
+              <span class="node-label-en">node_sql · sql_hint · 记忆</span>
+            </div>
+          </div>
+          <div class="branch-wrap">
+            <div class="branch-line-v"></div>
+            <div class="branch-node node-rose" style="font-size:9.5px;">
+              ↺ 自动Retry<br>
+              <span style="opacity:0.7">≤2次 · 校验失败重生成</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Arrow 7 -->
+        <div class="arrow-h" style="margin-top:22px; flex-shrink:0;">
+          <div class="arrow-h-line"></div>
+        </div>
+
+        <!-- Node 8: Answer -->
+        <div class="pipeline-step">
+          <div class="pipeline-step-inner">
+            <div class="node node-amber" style="min-width:130px;">
+              💬 node_answer<br>
+              <span class="node-label-en">执行SQL · 答案 · 追问×3</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Arrow 8 -->
+        <div class="arrow-h" style="margin-top:22px; flex-shrink:0;">
+          <div class="arrow-h-line"></div>
+        </div>
+
+        <!-- Node 9: Save -->
+        <div class="pipeline-step">
+          <div class="pipeline-step-inner">
+            <div class="node node-lavender" style="min-width:130px;">
+              💾 异步存储<br>
+              <span class="node-label-en">node_save · SQLite·Neo4j·Weaviate</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Arrow 9 -->
+        <div class="arrow-h arrow-h-wide" style="margin-top:22px; flex-shrink:0;">
+          <div class="arrow-h-line"></div>
+          <div class="arrow-label">SSE stream<br>answer+SQL+追问</div>
+        </div>
+
+        <!-- Node 10: Client Output -->
+        <div class="pipeline-step">
+          <div class="pipeline-step-inner">
+            <div class="node node-blue node-pill" style="min-width:124px;">
+              🖥️ 客户端展示<br>
+              <span class="node-label-en">答案·SQL·追问·调试日志</span>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /pipeline-wrap -->
+    </div><!-- /pipeline-container -->
+  </div><!-- /pipeline-section -->
+
+  <!-- BOTTOM SECTION: 4 Detail Cards -->
+  <div class="cards-section">
+    <div class="section-label">▸ Detail Cards &nbsp;· 模块详解</div>
+    <div class="cards-row">
+
+      <!-- Card 1: Intent -->
+      <div class="detail-card">
+        <div class="card-accent accent-amber"></div>
+        <div class="card-body">
+          <div class="card-title">🔍 意图识别 · 上下文注入</div>
+          <div class="card-flow">
+
+            <div class="card-node node-amber">
+              node_intent LLM<br>
+              <span style="font-size:9.5px;opacity:0.75">intent · metrics · time_range · confidence_score</span>
+            </div>
+            <div class="card-arrow"><div class="card-arrow-v"></div></div>
+
+            <div class="card-parallel">
+              <div class="card-node node-lavender">
+                👤 用户画像<br>
+                <span style="font-size:9px;opacity:0.75">Neo4j User节点<br>profile_hint</span>
+              </div>
+              <div class="card-node node-teal">
+                💬 轻量上下文<br>
+                <span style="font-size:9px;opacity:0.75">最近3轮Q<br>light_ctx</span>
+              </div>
+            </div>
+            <div class="card-arrow"><div class="card-arrow-v"></div></div>
+
+            <div class="card-node node-yellow">
+              ⚖️ 置信度校验<br>
+              <span style="font-size:9px;opacity:0.75">追问场景自动豁免<br>产品名不匹配硬降分</span>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2: Recall -->
+      <div class="detail-card">
+        <div class="card-accent accent-teal"></div>
+        <div class="card-body">
+          <div class="card-title">🧠 召回层 · 图谱增强</div>
+          <div class="card-flow">
+
+            <div class="dashed-group">
+              <div class="dashed-label">并发预取</div>
+              <div class="card-flow" style="gap:4px;">
+                <div class="card-node node-mint">
+                  🧠 Weaviate<br>
+                  <span style="font-size:9px;opacity:0.75">alias精确匹配 → near_text top-2</span>
+                </div>
+                <div class="card-node node-lavender">
+                  💾 UserMemory<br>
+                  <span style="font-size:9px;opacity:0.75">L3语义召回 top-3</span>
+                </div>
+              </div>
+            </div>
+            <div class="card-arrow"><div class="card-arrow-v"></div></div>
+
+            <div class="card-node node-teal">
+              🕸️ node_graph_enrich<br>
+              <span style="font-size:9px;opacity:0.75">DERIVED_FROM*1..2 补sql_hint<br>SOURCE_FROM得依赖表</span>
+            </div>
+            <div class="card-arrow"><div class="card-arrow-v"></div></div>
+
+            <div class="card-node node-teal">
+              lineage专用: node_neo4j<br>
+              <span style="font-size:9px;opacity:0.75">血缘树 → node_format 直出</span>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 3: SQL Gen -->
+      <div class="detail-card">
+        <div class="card-accent accent-lavender"></div>
+        <div class="card-body">
+          <div class="card-title">🔧 SQL生成 · 校验 · Retry</div>
+          <div class="card-flow">
+
+            <div class="card-node node-amber">
+              node_sql LLM<br>
+              <span style="font-size:9px;opacity:0.75">sql_hint · 双层会话上下文<br>用户记忆 · max_tokens 4000</span>
+            </div>
+            <div class="card-arrow"><div class="card-arrow-v"></div></div>
+
+            <div class="card-node node-yellow">
+              SQL校验<br>
+              <span style="font-size:9px;opacity:0.75">尾逗号+语法检测 · _strip_non_sql</span>
+            </div>
+            <div class="card-arrow-dashed" style="display:flex;flex-direction:column;align-items:center;gap:0;">
+              <div style="width:1.5px;height:10px;background:repeating-linear-gradient(to bottom, #B0BFCC 0px, #B0BFCC 4px, transparent 4px, transparent 8px);position:relative;">
+              </div>
+              <div style="font-size:9px;color:#c0c0a0;font-style:italic;">失败↺ retry≤2</div>
+            </div>
+
+            <div class="card-node node-amber">
+              node_answer<br>
+              <span style="font-size:9px;opacity:0.75">执行SQL · 答案 · follow_up×3</span>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:0;">
+              <div style="width:1.5px;height:10px;background:repeating-linear-gradient(to bottom, #B0BFCC 0px, #B0BFCC 4px, transparent 4px, transparent 8px);"></div>
+              <div style="font-size:9px;color:#c0c0a0;font-style:italic;">异步</div>
+            </div>
+
+            <div class="card-node node-lavender">
+              node_save<br>
+              <span style="font-size:9px;opacity:0.75">SQLite + Neo4j User画像<br>haiku提取L3→UserMemory</span>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 4: Memory / Cron / Storage -->
+      <div class="detail-card">
+        <div class="card-accent accent-blue"></div>
+        <div class="card-body">
+          <div class="card-title">💡 记忆 · Cron · 数据层</div>
+          <div class="card-flow" style="align-items:flex-start;gap:8px;">
+
+            <div class="stacked-group">
+              <div class="stacked-group-label">会话记忆</div>
+              <div style="display:flex;flex-direction:column;gap:4px;width:100%;">
+                <div class="card-node node-slate" style="font-size:9.5px;">
+                  上一轮完整 entities + SQL
+                </div>
+                <div class="card-node node-slate" style="font-size:9.5px;">
+                  历史12轮 result_brief 80字
+                </div>
+              </div>
+            </div>
+
+            <div class="stacked-group">
+              <div class="stacked-group-label">⏰ Cron 03:00</div>
+              <div class="cron-flow">
+                <div class="cron-node node-blue" style="font-size:9px;">sync_metrics</div>
+                <div class="cron-arrow">→</div>
+                <div class="cron-node node-blue" style="font-size:9px;">sync_tables</div>
+                <div class="cron-arrow">→</div>
+                <div class="cron-node node-lavender" style="font-size:9px;">build_profile</div>
+                <div class="cron-arrow">→</div>
+                <div class="cron-node node-mint" style="font-size:9px;">pre_suggest</div>
+              </div>
+            </div>
+
+            <div class="stacked-group" style="margin-bottom:0;">
+              <div class="stacked-group-label">持久化数据层</div>
+              <div class="grid-2x2">
+                <div class="card-node node-mint">
+                  🌿 Weaviate<br>
+                  <span style="opacity:0.75">Metric/Domain<br>UserMemory/Jargon</span>
+                </div>
+                <div class="card-node node-teal">
+                  🕸️ Neo4j<br>
+                  <span style="opacity:0.75">:Metric/:Table/:User<br>DERIVED_FROM</span>
+                </div>
+                <div class="card-node node-slate">
+                  🗄️ SQLite<br>
+                  <span style="opacity:0.75">session_turns<br>session_summary</span>
+                </div>
+                <div class="card-node node-slate">
+                  📁 文件缓存<br>
+                  <span style="opacity:0.75">suggest_cache<br>prompt.yaml</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /cards-row -->
+  </div><!-- /cards-section -->
+
+  <!-- Legend -->
+  <div style="border-top: 1px solid #E8EEF5; padding-top: 18px;">
+    <div class="section-label" style="margin-bottom:10px;">▸ Legend &nbsp;· 图例</div>
+    <div class="legend">
+      <div class="legend-item">
+        <div class="legend-swatch" style="background:#DFF0FF;border-color:#90C6F5;"></div>
+        客户端/API
+      </div>
+      <div class="legend-item">
+        <div class="legend-swatch" style="background:#FEF6E0;border-color:#F4CC6A;"></div>
+        LLM 调用
+      </div>
+      <div class="legend-item">
+        <div class="legend-swatch" style="background:#E3F6EC;border-color:#85CCA8;"></div>
+        Weaviate 召回
+      </div>
+      <div class="legend-item">
+        <div class="legend-swatch" style="background:#DFF8F4;border-color:#82D9CE;"></div>
+        Neo4j 图谱
+      </div>
+      <div class="legend-item">
+        <div class="legend-swatch" style="background:#F0EAFF;border-color:#C3AAEE;"></div>
+        存储/记忆
+      </div>
+      <div class="legend-item">
+        <div class="legend-swatch" style="background:#FDECEA;border-color:#F0A8A0;"></div>
+        异常/分支
+      </div>
+      <div class="legend-item">
+        <div class="legend-swatch" style="background:#FFFBE6;border-color:#FFE48A;"></div>
+        校验/判断
+      </div>
+      <div class="legend-item">
+        <div class="legend-swatch" style="background:#F0F4F8;border-color:#B0BFCC;"></div>
+        内部处理
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">Generated by 小D · brain-query NL-to-SQL System &nbsp;·&nbsp; 2026</div>
+</div>
+</body>
+</html>
