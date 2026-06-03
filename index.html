@@ -183,20 +183,20 @@
       <div class="row">
 
         <!-- Extreme asymmetric hourglass -->
-        <!-- Top: tiny inverted triangle (elite = very small) -->
-        <!-- Bottom: very wide large triangle (masses = huge) -->
-        <div class="shape-cell" style="height:156px;">
-          <svg width="170" height="132" viewBox="0 0 170 132">
-            <!-- Top tiny inverted triangle -->
-            <polygon points="69,8 101,8 85,60"
+        <!-- Top: tiny inverted triangle (elite = very small, narrow) -->
+        <!-- Bottom: very wide flat triangle (masses = huge, flat) -->
+        <div class="shape-cell" style="height:160px;">
+          <svg width="200" height="140" viewBox="0 0 200 140">
+            <!-- Top: tiny narrow inverted triangle -->
+            <polygon points="90,8 110,8 100,44"
               fill="#FFFFFF" stroke="#1a1a1a" stroke-width="2" stroke-linejoin="round"/>
-            <!-- Bottom very wide large triangle -->
-            <polygon points="85,60 2,126 168,126"
+            <!-- Bottom: very wide flat triangle, barely any height -->
+            <polygon points="100,44 2,130 198,130"
               fill="#FFFFFF" stroke="#1a1a1a" stroke-width="2" stroke-linejoin="round"/>
-            <circle cx="85" cy="60" r="2.5" fill="#1a1a1a"/>
+            <circle cx="100" cy="44" r="2.5" fill="#1a1a1a"/>
           </svg>
-          <div class="annot" style="top:12px; left:50%; transform:translateX(-50%);">少数精英</div>
-          <div class="annot warn" style="top:54px; left:50%; transform:translateX(-50%);">中产消失</div>
+          <div class="annot" style="top:10px; left:50%; transform:translateX(-50%);">少数精英</div>
+          <div class="annot warn" style="top:46px; left:50%; transform:translateX(-50%);">中产消失</div>
           <div class="annot" style="bottom:14px; left:50%; transform:translateX(-50%);">庞大底层</div>
         </div>
 
@@ -207,14 +207,15 @@
           </svg>
         </div>
 
-        <!-- Extremely exaggerated inverted triangle -->
-        <div class="shape-cell" style="height:156px;">
-          <svg width="170" height="132" viewBox="0 0 170 132">
-            <polygon points="2,6 168,6 85,130"
+        <!-- Extremely flat wide inverted triangle (saucer/lens shape) -->
+        <div class="shape-cell" style="height:160px;">
+          <svg width="200" height="140" viewBox="0 0 200 140">
+            <!-- Very wide, very flat inverted triangle -->
+            <polygon points="2,8 198,8 100,132"
               fill="#FFFFFF" stroke="#1a1a1a" stroke-width="2" stroke-linejoin="round"/>
           </svg>
-          <div class="annot" style="top:12px; left:50%; transform:translateX(-50%);">少数人 · 绝大多数产值</div>
-          <div class="annot warn" style="bottom:12px; left:50%; transform:translateX(-50%);">多数人 · 贡献趋近于零</div>
+          <div class="annot" style="top:10px; left:50%; transform:translateX(-50%);">少数人 · 绝大多数产值</div>
+          <div class="annot warn" style="bottom:10px; left:50%; transform:translateX(-50%);">多数人 · 贡献趋近于零</div>
         </div>
 
       </div>
